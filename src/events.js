@@ -1,6 +1,3 @@
-/*global module exports require*/
-/*jslint white: true, undef: true, nomen: true, bitwise: true, regexp: true, newcap: true*/
-
 /**
  * @namespace
  * Support for listening for and triggering events
