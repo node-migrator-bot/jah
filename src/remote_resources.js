@@ -54,6 +54,23 @@ RemoteImage.prototype.load = function () {
     return img;
 };
 
+function RemoteScript(url, path) {
+    RemoteResource.apply(this, arguments);
+}
+
+RemoteScript.prototype = Object.create(RemoteResource.prototype);
+
+RemoteScript.prototype.load = function () {
+    var script = document.createElement('script');
+    script.onload = function () {
+        __resources__[this.path] = script;
+        events.trigger(this, 'load', this);
+    }.bind(this);
+    script.src = this.url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+};
+
 exports.RemoteImage = RemoteImage;
 exports.RemoteResource = RemoteResource;
+exports.RemoteScript = RemoteScript;
 
