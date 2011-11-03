@@ -39,7 +39,7 @@ var path = {
      * @returns {Boolean} True if the path exists, false if not
      */
     exists: function(path) {
-        return (__resources__[path] !== undefined);
+        return (__jah__.resources[path] !== undefined);
     },
 
     /**

@@ -1,76 +1,73 @@
-"use strict";
+"use strict"
 
 var util = require('./index'),
-    events = require('events');
+    events = require('events')
 
 function RemoteResource(url, path) {
-    this.url = url;
-    this.path = path;
+    this.url = url
+    this.path = path
 }
 
 /**
  * Load the remote resource via ajax
  */
 RemoteResource.prototype.load = function () {
-    var xhr = new XMLHttpRequest();
+    var xhr = new XMLHttpRequest()
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4) {
-            var path = this.path
+            __jah__.resources[this.path].data = xhr.responseText
+            __jah__.resources[this.path].loaded = true
 
-            var r = __remote_resources__[path];
-            __resources__[path] = util.copy(r);
-            __resources__[path].data = xhr.responseText;
-            __resources__[path].meta.remote = true;
-
-            events.trigger(this, 'load', this);
+            events.trigger(this, 'load', this)
         }
-    }.bind(this);
+    }.bind(this)
 
-    xhr.open('GET', this.url, true);  
-    xhr.send(null);
-};
+    xhr.open('GET', this.url, true)  
+    xhr.send(null)
+}
 
 function RemoteImage(url, path) {
-    RemoteResource.apply(this, arguments);
+    RemoteResource.apply(this, arguments)
 }
 
-RemoteImage.prototype = Object.create(RemoteResource.prototype);
+RemoteImage.prototype = Object.create(RemoteResource.prototype)
 
 RemoteImage.prototype.load = function () {
-    var img = new Image();
+    var img = new Image()
+    __jah__.resources[this.path].data = img
+
     img.onload = function () {
-        var path = this.path
-
-        var r = __remote_resources__[path];
-        __resources__[path] = util.copy(r);
-        __resources__[path].data = img;
-        __resources__[path].meta.remote = true;
-
-        events.trigger(this, 'load', this);
-    }.bind(this);
+        __jah__.resources[this.path].loaded = true
+        events.trigger(this, 'load', this)
+    }.bind(this)
     
-    img.src = this.url;
+    img.src = this.url
 
-    return img;
-};
-
-function RemoteScript(url, path) {
-    RemoteResource.apply(this, arguments);
+    return img
 }
 
-RemoteScript.prototype = Object.create(RemoteResource.prototype);
+function RemoteScript(url, path) {
+    RemoteResource.apply(this, arguments)
+}
+
+RemoteScript.prototype = Object.create(RemoteResource.prototype)
 
 RemoteScript.prototype.load = function () {
-    var script = document.createElement('script');
-    script.onload = function () {
-        __resources__[this.path] = script;
-        events.trigger(this, 'load', this);
-    }.bind(this);
-    script.src = this.url;
-    document.getElementsByTagName('head')[0].appendChild(script);
-};
+    var script = document.createElement('script')
+    __jah__.resources[this.path].data = script
 
-exports.RemoteImage = RemoteImage;
-exports.RemoteResource = RemoteResource;
-exports.RemoteScript = RemoteScript;
+    script.onload = function () {
+        __jah__.resources[this.path].loaded = true
+        events.trigger(this, 'load', this)
+    }.bind(this)
+
+    script.src = this.url
+    document.getElementsByTagName('head')[0].appendChild(script)
+
+    return script
+}
+
+exports.RemoteImage = RemoteImage
+exports.RemoteResource = RemoteResource
+exports.RemoteScript = RemoteScript
 
