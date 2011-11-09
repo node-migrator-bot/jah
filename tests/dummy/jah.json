@@ -1,5 +1,5 @@
 { "jah_project": { "version": "0.0.1" }
 
 , "output": "dummy.js"
-, "libs": [ ]
+, "libs": [ "dummy_module" ]
 }
