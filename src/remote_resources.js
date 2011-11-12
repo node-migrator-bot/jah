@@ -40,6 +40,12 @@ RemoteImage.prototype.load = function () {
         __jah__.resources[this.path].loaded = true
         events.trigger(this, 'load', this)
     }.bind(this)
+
+    img.onerror = function () {
+        console.warn("Failed to load resource: [%s] from [%s]", this.path, img.src)
+        __jah__.resources[this.path].loaded = true
+        events.trigger(this, 'load', this)
+    }.bind(this)
     
     img.src = this.url
 

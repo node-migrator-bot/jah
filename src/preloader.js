@@ -14,7 +14,7 @@ function Preloader (items) {
         this.addToQueue(items)
     }
 
-    var didLoadResource = (function (ref) {
+    var didLoadResource = function (ref) {
         this.loaded++
 
         // Must remove listener or we'll leak memory
@@ -23,10 +23,11 @@ function Preloader (items) {
         }
         events.trigger(this, 'load', this, ref);
 
+
         if (this.loaded >= this.count) {
             events.trigger(this, 'complete', this);
         }
-    }).bind(this)
+    }.bind(this)
 
     this.load = function () {
         // Store number of callbacks we're expecting
@@ -69,6 +70,23 @@ Preloader.prototype.addToQueue = function (items) {
         }
     } else {
         this.queue.push(items)
+    }
+}
+
+Preloader.prototype.addEverythingToQueue = function () {
+    var items = []
+    var key, res
+    for (key in __jah__.resources) {
+        if (__jah__.resources.hasOwnProperty(key)) {
+            res = __jah__.resources[key]
+            if (res.remote) {
+                items.push(key)
+            }
+        }
+    }
+
+    if (items.length > 0) {
+        this.addToQueue(items)
     }
 }
 
