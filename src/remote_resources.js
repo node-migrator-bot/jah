@@ -73,6 +73,33 @@ RemoteScript.prototype.load = function () {
     return script
 }
 
+exports.getRemoteResource = function getRemoteResource(resourcePath) {
+    var resource = __jah__.resources[resourcePath]
+
+    if (!resource) {
+        return null
+    }
+
+    if (resource.remoteResource) {
+        return resource.remoteResource
+    }
+
+    var RemoteObj
+      , mime = resource.mimetype.split('/')
+
+    if (mime[0] == 'image') {
+        RemoteObj = RemoteImage
+    } else if(mime[1] == 'javascript') {
+        RemoteObj = RemoteScript
+    } else {
+        RemoteObj = RemoteResource
+    }
+
+    resource.remoteResource = new RemoteObj(resource.data, resourcePath)
+
+    return resource.remoteResource
+}
+
 exports.RemoteImage = RemoteImage
 exports.RemoteResource = RemoteResource
 exports.RemoteScript = RemoteScript

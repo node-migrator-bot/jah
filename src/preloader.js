@@ -47,15 +47,17 @@ function Preloader (items) {
                 didLoadResource(ref)
                 continue
             }
-            var url = __jah__.resources[ref].data
-              // TODO handle non-image resources
-              , file = new remotes.RemoteImage(url, ref)
+            var file = resource(ref)
               , callback = (function(ref) { return function () { didLoadResource(ref) } })(ref)
 
-            // Notify when a resource has loaded
-            listeners[ref] = events.addListener(file, 'load', callback);
+            if (file instanceof remotes.RemoteResource) {
+                // Notify when a resource has loaded
+                listeners[ref] = events.addListener(file, 'load', callback);
 
-            file.load()
+                file.load()
+            } else {
+                setTimeout(callback, 1)
+            }
         }
 
         this.clearQueue()
