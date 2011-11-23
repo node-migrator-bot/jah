@@ -1,7 +1,0 @@
-{ "jah_project": { "version": "$version$" }
-
-, "output": "$filename$.js"
-
-, "libs": [ {"jah/libs/": "/libs"}
-          ]
-}
