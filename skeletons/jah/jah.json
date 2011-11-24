@@ -1,2 +1,2 @@
-{ "jah_project": { "version": "$version$" }
+{ "jah_project": { "version": "$jahVersion$" }
 }
