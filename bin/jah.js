@@ -15,9 +15,9 @@ if (isLocal) {
     require.paths.unshift(path.join(__dirname, '../lib'));
 
     if (parseInt(process.version.split('.')[1], 10) < 2) {
-        sys.puts('ERROR: jah requires node version 0.2.x or higher, but you are using ' + process.version);
+        sys.puts('ERROR: Jah requires node version 0.2.x or higher, but you are using ' + process.version);
         process.exit(1);
     }
 
-    require('jah').main();
+    require('jah/commands').main();
 }
