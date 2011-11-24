@@ -2,7 +2,7 @@
     "name": "jah",
     "author": "Ryan Williams <ryan@wigg.ly>",
     "description": "Enable CommonJS in browser applications",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "homepage": "https://github.com/ryanwilliams/jah",
 
     "engines": {
