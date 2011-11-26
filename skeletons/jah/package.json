@@ -1,5 +1,5 @@
 {
-    "name": "$appname$",
+    "name": "${appname}",
     "author": "",
     "description": "",
     "version": "0.0.1",
@@ -13,6 +13,6 @@
     },
 
     "dependencies": {
-        "jah": "~$jahVersion$"
+        "jah": "~${jahVersion}"
     }
 }
