@@ -25,6 +25,10 @@ function getListeners(obj, eventName) {
     return obj.js_listeners_[eventName];
 }
 
+
+function Event () {}
+events.Event = Event
+
 /**
  * @private
  * @ignore
@@ -88,6 +92,59 @@ events.addListener = function (source, eventName, handler) {
         }
         return listeners;
     } else {
+        // Watching for a property value change
+        if (/(.*)_changed$/.test(eventName)) {
+            // Add a magical setter to notify when the property does change
+            var propName = RegExp.$1
+            if (propName in source) {
+                var propDesc = Object.getOwnPropertyDescriptor(source, propName)
+
+                var trigger = function (target, prevVal) {
+                    var e = new Event
+                    e.target = target
+                    e.type = eventName
+                    e.oldValue = prevVal
+                    events.trigger(target, eventName, e)
+                }
+
+                if (propDesc.writable) {
+                    var currentVal = propDesc.value
+                      , prevVal
+                      , getter = function () {
+                            return currentVal
+                        }
+                      , setter = function (newVal) {
+                            prevVal = currentVal
+                            currentVal = newVal
+
+                            trigger(this, prevVal)
+                        }
+
+                    setter.__trigger = true
+
+                    delete propDesc.value
+                    delete propDesc.writable
+                    propDesc.get = getter
+                    propDesc.set = setter
+
+                    Object.defineProperty(source, propName, propDesc)
+                } else if (propDesc.set && !propDesc.set.__trigger) {
+                    var originalSetter = propDesc.set
+                      , currentVal = source[propName]
+                      , prevVal
+                      , setter = function (newVal) {
+                            prevVal = currentVal
+                            originalSetter.call(this, newVal)
+                            currentVal = this[propName]
+
+                            trigger(this, prevVal)
+                        }
+                    propDesc.set = setter
+                    Object.defineProperty(source, propName, propDesc)
+                }
+
+            }
+        }
         return new events.EventListener(source, eventName, handler);
     }
 };
