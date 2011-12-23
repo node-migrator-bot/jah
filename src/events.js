@@ -4,6 +4,104 @@
  */
 var events = {};
 
+
+/**
+ * Jah Event
+ */
+function Event (type, cancelable) {
+    if (cancelable) {
+        Object.defineProperty(this, 'cancelable', { value: true, writable: false })
+    }
+    this.type = type
+}
+Object.defineProperty(Event.prototype, 'defaultPrevented', { value: false, writable: false })
+Object.defineProperty(Event.prototype, 'cancelable',       { value: false, writable: false })
+Event.prototype.preventDefault = function () {
+    if (this.cancelable) {
+        Object.defineProperty(this, 'defaultPrevented', { value: true, writable: false })
+    }
+}
+events.Event = Event
+
+function PropertyEvent () {
+    Event.apply(this, arguments)
+}
+PropertyEvent.prototype = Object.create(Event.prototype)
+events.PropertyEvent = PropertyEvent
+
+
+
+
+// Add a magical setter to notify when the property does change
+function watchProperty (target, name) {
+    var propDesc = Object.getOwnPropertyDescriptor(target, name)
+
+    var triggerBefore = function (target, newVal) {
+        var e = new PropertyEvent('beforechange', true)
+        e.target = {object: target, property: name}
+        e.newValue = newVal
+        events.triggerProperty(target, name, e.type, e)
+
+        return e
+    }
+
+    var triggerAfter = function (target, prevVal) {
+        var e = new PropertyEvent('change')
+        e.target = {object: target, property: name}
+        e.oldValue = prevVal
+        events.triggerProperty(target, name, e.type, e)
+
+        return e
+    }
+
+    // Listening to a normal property
+    if (propDesc.writable) {
+        var currentVal = propDesc.value
+          , prevVal
+          , getter = function () {
+                return currentVal
+            }
+          , setter = function (newVal) {
+                var e = triggerBefore(this, newVal)
+                if (!e.defaultPrevented) {
+                    prevVal = currentVal
+                    currentVal = newVal
+
+                    e = triggerAfter(this, prevVal)
+                }
+            }
+
+        setter.__trigger = true
+
+        delete propDesc.value
+        delete propDesc.writable
+        propDesc.get = getter
+        propDesc.set = setter
+
+        Object.defineProperty(target, name, propDesc)
+    }
+
+    // Listening for calls to an accessor (getter/setter)
+    else if (propDesc.set && !propDesc.set.__trigger) {
+        var originalSetter = propDesc.set
+          , currentVal = target[name]
+          , prevVal
+          , setter = function (newVal) {
+                var e = triggerBefore(this, newVal)
+                if (!e.defaultPrevented) {
+                    prevVal = currentVal
+                    originalSetter.call(this, newVal)
+                    currentVal = this[name]
+
+                    triggerAfter(this, prevVal)
+                }
+            }
+        propDesc.set = setter
+        Object.defineProperty(target, name, propDesc)
+    }
+
+}
+
 /**
  * @private
  * @ignore
@@ -13,28 +111,53 @@ var events = {};
  * @returns {Object}
  */
 function getListeners(obj, eventName) {
-    if (!obj.js_listeners_) {
-        obj.js_listeners_ = {};
+    var listenerDesc = Object.getOwnPropertyDescriptor(obj, '__jahEventListeners__')
+    if (!listenerDesc) {
+        Object.defineProperty(obj, '__jahEventListeners__', {
+            value: {}
+        })
     }
     if (!eventName) {
-        return obj.js_listeners_;
+        return obj.__jahEventListeners__;
     }
-    if (!obj.js_listeners_[eventName]) {
-        obj.js_listeners_[eventName] = {};
+    if (!obj.__jahEventListeners__[eventName]) {
+        obj.__jahEventListeners__[eventName] = {};
     }
-    return obj.js_listeners_[eventName];
+    return obj.__jahEventListeners__[eventName];
 }
 
+function getPropertyListeners(obj, property, eventName) {
+    var listenerDesc = Object.getOwnPropertyDescriptor(obj, '__jahPropertyEventListeners__')
+    if (!listenerDesc) {
+        Object.defineProperty(obj, '__jahPropertyEventListeners__', {
+            value: {}
+        })
+    }
+    if (!property) {
+        return obj.__jahPropertyEventListeners__
+    }
+    if (!obj.__jahPropertyEventListeners__[property]) {
+        obj.__jahPropertyEventListeners__[property] = {}
+    }
 
-function Event () {}
-events.Event = Event
+    if (!eventName) {
+        return obj.__jahPropertyEventListeners__[property]
+    }
+
+    if (!obj.__jahPropertyEventListeners__[property][eventName]) {
+        obj.__jahPropertyEventListeners__[property][eventName] = {};
+    }
+    return obj.__jahPropertyEventListeners__[property][eventName];
+}
+
 
 /**
  * @private
  * @ignore
  * Keep track of the next ID for each new EventListener
  */
-var eventID = 0;
+var eventID = 0
+  , propertyEventID = 0
 
 /**
  * @class
@@ -70,10 +193,20 @@ events.EventListener = function (source, eventName, handler) {
      * Unique ID number for this instance
      * @type Integer 
      */
-    this.id = ++eventID;
+    this.id = eventID++;
 
     getListeners(source, eventName)[this.id] = this;
 };
+
+events.PropertyEventListener = function (source, property, eventName, handler) {
+    this.source = source;
+    this.eventName = eventName;
+    this.property = property;
+    this.handler = handler;
+    this.id = propertyEventID++;
+    getPropertyListeners(source, property, eventName)[this.id] = this;
+}
+events.PropertyEventListener.prototype = Object.create(events.EventListener)
 
 /**
  * Register an event listener
@@ -88,66 +221,26 @@ events.addListener = function (source, eventName, handler) {
     if (eventName instanceof Array) {
         var listeners = [];
         for (var i = 0, len = eventName.length; i < len; i++) {
-            listeners.push(new events.EventListener(source, eventName[i], handler));
+            listeners.push(events.addListener(source, eventName[i], handler));
         }
         return listeners;
     } else {
-        // Watching for a property value change
-        if (/(.*)_changed$/.test(eventName)) {
-            // Add a magical setter to notify when the property does change
-            var propName = RegExp.$1
-            if (propName in source) {
-                var propDesc = Object.getOwnPropertyDescriptor(source, propName)
-
-                var trigger = function (target, prevVal) {
-                    var e = new Event
-                    e.target = target
-                    e.type = eventName
-                    e.oldValue = prevVal
-                    events.trigger(target, eventName, e)
-                }
-
-                if (propDesc.writable) {
-                    var currentVal = propDesc.value
-                      , prevVal
-                      , getter = function () {
-                            return currentVal
-                        }
-                      , setter = function (newVal) {
-                            prevVal = currentVal
-                            currentVal = newVal
-
-                            trigger(this, prevVal)
-                        }
-
-                    setter.__trigger = true
-
-                    delete propDesc.value
-                    delete propDesc.writable
-                    propDesc.get = getter
-                    propDesc.set = setter
-
-                    Object.defineProperty(source, propName, propDesc)
-                } else if (propDesc.set && !propDesc.set.__trigger) {
-                    var originalSetter = propDesc.set
-                      , currentVal = source[propName]
-                      , prevVal
-                      , setter = function (newVal) {
-                            prevVal = currentVal
-                            originalSetter.call(this, newVal)
-                            currentVal = this[propName]
-
-                            trigger(this, prevVal)
-                        }
-                    propDesc.set = setter
-                    Object.defineProperty(source, propName, propDesc)
-                }
-
-            }
-        }
         return new events.EventListener(source, eventName, handler);
     }
 };
+
+events.addPropertyListener = function (source, property, eventName, handler) {
+    if (eventName instanceof Array) {
+        var listeners = [];
+        for (var i = 0, len = eventName.length; i < len; i++) {
+            listeners.push(events.addPropertyListener(source, property, eventName[i], handler));
+        }
+        return listeners;
+    } else {
+        watchProperty(source, property)
+        return new events.PropertyEventListener(source, property, eventName, handler);
+    }
+}
 
 /**
  * Trigger an event. All listeners will be notified.
@@ -165,7 +258,23 @@ events.trigger = function (source, eventName) {
         if (listeners.hasOwnProperty(eventID)) {
             l = listeners[eventID];
             if (l) {
-                l.handler.apply(undefined, args);
+                l.handler.apply(null, args);
+            }
+        }
+    }
+};
+
+events.triggerProperty = function (source, property, eventName) {
+    var listeners = getPropertyListeners(source, property, eventName),
+        args = Array.prototype.slice.call(arguments, 3),
+        eventID,
+        l;
+
+    for (eventID in listeners) {
+        if (listeners.hasOwnProperty(eventID)) {
+            l = listeners[eventID];
+            if (l) {
+                l.handler.apply(null, args);
             }
         }
     }
@@ -177,7 +286,11 @@ events.trigger = function (source, eventName) {
  * @param {events.EventListener} listener EventListener to remove, as returned by events.addListener
  */
 events.removeListener = function (listener) {
-    delete getListeners(listener.source, listener.eventName)[listener.eventID];
+    if (listener instanceof events.PropertyEventListener) {
+        delete getPropertyListeners(listener.source, listener.property, listener.eventName)[listener.eventID];
+    } else {
+        delete getListeners(listener.source, listener.eventName)[listener.eventID];
+    }
 };
 
 /**
