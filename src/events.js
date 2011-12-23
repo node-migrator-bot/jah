@@ -34,7 +34,22 @@ events.PropertyEvent = PropertyEvent
 
 // Add a magical setter to notify when the property does change
 function watchProperty (target, name) {
-    var propDesc = Object.getOwnPropertyDescriptor(target, name)
+    var propDesc
+      , realTarget = target
+
+    // Search up prototype chain to find where the property really lives
+    while (!(propDesc = Object.getOwnPropertyDescriptor(realTarget, name))) {
+        Object.getOwnPropertyDescriptor(target, name)
+        realTarget = Object.getPrototypeOf(realTarget)
+
+        if (!realTarget) {
+            break
+        }
+    }
+
+    if (!propDesc) {
+        throw new Error("Unable to find property: " + name)
+    }
 
     var triggerBefore = function (target, newVal) {
         var e = new PropertyEvent('beforechange', true)
