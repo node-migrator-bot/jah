@@ -39,7 +39,6 @@ function watchProperty (target, name) {
 
     // Search up prototype chain to find where the property really lives
     while (!(propDesc = Object.getOwnPropertyDescriptor(realTarget, name))) {
-        Object.getOwnPropertyDescriptor(target, name)
         realTarget = Object.getPrototypeOf(realTarget)
 
         if (!realTarget) {
@@ -245,10 +244,15 @@ events.addListener = function (source, eventName, handler) {
 };
 
 events.addPropertyListener = function (source, property, eventName, handler) {
+    var listeners = [], i;
     if (eventName instanceof Array) {
-        var listeners = [];
-        for (var i = 0, len = eventName.length; i < len; i++) {
+        for (i = 0, len = eventName.length; i < len; i++) {
             listeners.push(events.addPropertyListener(source, property, eventName[i], handler));
+        }
+        return listeners;
+    } else if (property instanceof Array) {
+        for (i = 0, len = property.length; i < len; i++) {
+            listeners.push(events.addPropertyListener(source, property[i], eventName, handler));
         }
         return listeners;
     } else {
