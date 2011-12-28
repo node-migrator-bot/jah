@@ -3,15 +3,25 @@
 var util = require('./index'),
     events = require('events')
 
+/**
+ * @namespace
+ */
+var remote_resources = {}
+
+/**
+ * @class
+ * @memberOf remote_resources
+ */
 function RemoteResource(url, path) {
     this.url = url
     this.path = path
 }
+remote_resources.RemoteResource = RemoteResource
 
 /**
  * Load the remote resource via ajax
  */
-RemoteResource.prototype.load = function () {
+remote_resources.RemoteResource.prototype.load = function () {
     var xhr = new XMLHttpRequest()
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4) {
@@ -26,21 +36,33 @@ RemoteResource.prototype.load = function () {
     xhr.send(null)
 }
 
+/**
+ * @class
+ * @memberOf remote_resources
+ * @extends remote_resources.RemoteResource
+ */
 function RemoteImage(url, path) {
     RemoteResource.apply(this, arguments)
 }
+remote_resources.RemoteImage = RemoteImage
 
-RemoteImage.prototype = Object.create(RemoteResource.prototype)
+remote_resources.RemoteImage.prototype = Object.create(RemoteResource.prototype)
 
-RemoteImage.prototype.load = function () {
+remote_resources.RemoteImage.prototype.load = function () {
     var img = new Image()
     __jah__.resources[this.path].data = img
 
+    /**
+     * @ignore
+     */
     img.onload = function () {
         __jah__.resources[this.path].loaded = true
         events.trigger(this, 'load', this)
     }.bind(this)
 
+    /**
+     * @ignore
+     */
     img.onerror = function () {
         console.warn("Failed to load resource: [%s] from [%s]", this.path, img.src)
         __jah__.resources[this.path].loaded = true
@@ -52,16 +74,26 @@ RemoteImage.prototype.load = function () {
     return img
 }
 
+
+/**
+ * @class
+ * @memberOf remote_resources
+ * @extends remote_resources.RemoteResource
+ */
 function RemoteScript(url, path) {
     RemoteResource.apply(this, arguments)
 }
+remote_resources.RemoteScript = RemoteScript
 
-RemoteScript.prototype = Object.create(RemoteResource.prototype)
+remote_resources.RemoteScript.prototype = Object.create(RemoteResource.prototype)
 
-RemoteScript.prototype.load = function () {
+remote_resources.RemoteScript.prototype.load = function () {
     var script = document.createElement('script')
     __jah__.resources[this.path].data = script
 
+    /**
+     * @ignore
+     */
     script.onload = function () {
         __jah__.resources[this.path].loaded = true
         events.trigger(this, 'load', this)
@@ -73,7 +105,7 @@ RemoteScript.prototype.load = function () {
     return script
 }
 
-exports.getRemoteResource = function getRemoteResource(resourcePath) {
+remote_resources.getRemoteResource = function (resourcePath) {
     var resource = __jah__.resources[resourcePath]
 
     if (!resource) {
@@ -100,7 +132,4 @@ exports.getRemoteResource = function getRemoteResource(resourcePath) {
     return resource.remoteResource
 }
 
-exports.RemoteImage = RemoteImage
-exports.RemoteResource = RemoteResource
-exports.RemoteScript = RemoteScript
-
+module.exports = remote_resources

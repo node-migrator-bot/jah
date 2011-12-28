@@ -6,6 +6,7 @@ var events = {};
 
 
 /**
+ * @memberOf events
  * Jah Event
  */
 function Event (type, cancelable) {
@@ -16,6 +17,11 @@ function Event (type, cancelable) {
 }
 Object.defineProperty(Event.prototype, 'defaultPrevented', { value: false, writable: false })
 Object.defineProperty(Event.prototype, 'cancelable',       { value: false, writable: false })
+
+/**
+ * Prevents the default behaviour that happens after an event is triggered
+ * @memberOf events
+ */
 Event.prototype.preventDefault = function () {
     if (this.cancelable) {
         Object.defineProperty(this, 'defaultPrevented', { value: true, writable: false })
@@ -23,6 +29,12 @@ Event.prototype.preventDefault = function () {
 }
 events.Event = Event
 
+
+
+/**
+ * @memberOf events
+ * Jah Property Event
+ */
 function PropertyEvent () {
     Event.apply(this, arguments)
 }
@@ -32,7 +44,11 @@ events.PropertyEvent = PropertyEvent
 
 
 
-// Add a magical setter to notify when the property does change
+/**
+ * @private
+ * @ignore
+ * Add a magical setter to notify when the property does change
+ */
 function watchProperty (target, name) {
     var propDesc
       , realTarget = target
@@ -50,6 +66,11 @@ function watchProperty (target, name) {
         throw new Error("Unable to find property: " + name)
     }
 
+    /**
+     * @ignore
+     * @inner
+     * Triggers the 'beforechange' event on a property
+     */
     var triggerBefore = function (target, newVal) {
         var e = new PropertyEvent('beforechange', true)
         e.target = {object: target, property: name}
@@ -59,6 +80,11 @@ function watchProperty (target, name) {
         return e
     }
 
+    /**
+     * @ignore
+     * @inner
+     * Triggers the 'change' event on a property
+     */
     var triggerAfter = function (target, prevVal) {
         var e = new PropertyEvent('change')
         e.target = {object: target, property: name}
@@ -273,6 +299,12 @@ events.trigger = function (source, eventName) {
         eventID,
         l;
 
+    // Call the 'oneventName' method if it exists
+    if (typeof source['on' + eventName] == 'function') {
+        source['on' + eventName].apply(source, args)
+    }
+
+    // Call any registered listeners
     for (eventID in listeners) {
         if (listeners.hasOwnProperty(eventID)) {
             l = listeners[eventID];
@@ -283,6 +315,13 @@ events.trigger = function (source, eventName) {
     }
 };
 
+/**
+ * Trigger an event on a property. All listeners will be notified.
+ *
+ * @param {Object} source Object the property belongs to
+ * @param {String} property The name of the property on source
+ * @param {String} eventName The name of the event to strigger
+ */
 events.triggerProperty = function (source, property, eventName) {
     var listeners = getPropertyListeners(source, property, eventName),
         args = Array.prototype.slice.call(arguments, 3),
@@ -302,7 +341,7 @@ events.triggerProperty = function (source, property, eventName) {
 /**
  * Remove a previously registered event listener
  *
- * @param {events.EventListener} listener EventListener to remove, as returned by events.addListener
+ * @param {events.EventListener|events.PropertyEventListener} listener EventListener to remove, as returned by events.addListener or events.addPropertyListener
  */
 events.removeListener = function (listener) {
     if (listener instanceof events.PropertyEventListener) {
