@@ -7,7 +7,7 @@ var events = {};
 
 /**
  * @memberOf events
- * Jah Event
+ * @class Jah Event
  */
 function Event (type, cancelable) {
     if (cancelable) {
@@ -18,13 +18,12 @@ function Event (type, cancelable) {
 Object.defineProperty(Event.prototype, 'defaultPrevented', { value: false, writable: false })
 Object.defineProperty(Event.prototype, 'cancelable',       { value: false, writable: false })
 
-/**
- * Prevents the default behaviour that happens after an event is triggered
- * @memberOf events
- */
-Event.prototype.preventDefault = function () {
-    if (this.cancelable) {
-        Object.defineProperty(this, 'defaultPrevented', { value: true, writable: false })
+Event.prototype = /** @lends events.Event# */ {
+    constructor: Event
+  , preventDefault: function () {
+        if (this.cancelable) {
+            Object.defineProperty(this, 'defaultPrevented', { value: true, writable: false })
+        }
     }
 }
 events.Event = Event
@@ -33,7 +32,8 @@ events.Event = Event
 
 /**
  * @memberOf events
- * Jah Property Event
+ * @class Jah Property Event
+ * @extends events.Event
  */
 function PropertyEvent () {
     Event.apply(this, arguments)

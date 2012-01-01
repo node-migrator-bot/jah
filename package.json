@@ -25,8 +25,6 @@
         "url": "https://github.com/ryanwilliams/jah/blob/master/LICENSE"
     }],
 
-    "preferGlobal": true,
-
     "dependencies": {
         "colors": ">= 0.5.1"
     },
