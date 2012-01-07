@@ -1,5 +1,3 @@
-Experimental; Do not use yet.
-
 Overview
 ========
 
