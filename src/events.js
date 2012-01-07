@@ -6,8 +6,10 @@ var events = {};
 
 
 /**
+ * @class
+ * Jah Event
+ *
  * @memberOf events
- * @class Jah Event
  */
 function Event (type, cancelable) {
     if (cancelable) {
@@ -31,8 +33,10 @@ events.Event = Event
 
 
 /**
+ * @class
+ * Jah Property Event
+ *
  * @memberOf events
- * @class Jah Property Event
  * @extends events.Event
  */
 function PropertyEvent () {
@@ -204,8 +208,6 @@ var eventID = 0
  * Represents an event being listened to. You should not create instances of
  * this directly, it is instead returned by events.addListener
  *
- * @extends Object
- * 
  * @param {Object} source Object to listen to for an event
  * @param {String} eventName Name of the event to listen for
  * @param {Function} handler Callback to fire when the event triggers
@@ -216,7 +218,7 @@ events.EventListener = function (source, eventName, handler) {
      * @type Object 
      */
     this.source = source;
-    
+
     /**
      * Name of the event to listen for
      * @type String
@@ -238,6 +240,11 @@ events.EventListener = function (source, eventName, handler) {
     getListeners(source, eventName)[this.id] = this;
 };
 
+/**
+ * @class
+ *
+ * @extends events.EventListener
+ */
 events.PropertyEventListener = function (source, property, eventName, handler) {
     this.source = source;
     this.eventName = eventName;
@@ -252,7 +259,7 @@ events.PropertyEventListener.prototype = Object.create(events.EventListener)
  * Register an event listener
  *
  * @param {Object} source Object to listen to for an event
- * @param {String|Stringp[} eventName Name or Array of names of the event(s) to listen for
+ * @param {String|String[]} eventName Name or Array of names of the event(s) to listen for
  * @param {Function} handler Callback to fire when the event triggers
  *
  * @returns {events.EventListener|events.EventListener[]} The event listener(s). Pass to removeListener to destroy it.
