@@ -79,7 +79,7 @@ var jah = {
     },
 
     domReady: function() {
-        if (this._isReady) {
+        if (__jah__.__blockReady) {
             return;
         }
 
@@ -87,16 +87,16 @@ var jah = {
             setTimeout(function() { jah.domReady(); }, 13);
         }
 
-        window.__isReady = true;
+        __jah__.__isReady = true;
 
-        if (window.__readyList) {
+        if (__jah__.__readyList) {
             var fn, i = 0;
-            while ( (fn = window.__readyList[ i++ ]) ) {
+            while ( (fn = __jah__.__readyList[ i++ ]) ) {
                 fn.call(document);
             }
 
-            window.__readyList = null;
-            delete window.__readyList;
+            __jah__.__readyList = null;
+            delete __jah__.__readyList;
         }
     },
 
@@ -107,11 +107,16 @@ var jah = {
      */
     bindReady: function() {
 
-        if (window.__readyBound) {
+        if (__jah__.__readyBound) {
             return;
         }
 
-        window.__readyBound = true;
+        __jah__.__readyBound = true;
+
+        __jah__.__triggerReady = function () {
+            __jah__.__blockReady = false
+            this.domReady()
+        }.bind(this)
 
         // Catch cases where $(document).ready() is called after the
         // browser event has already occurred.
@@ -155,17 +160,17 @@ var jah = {
 
 
     ready: function(func) {
-        if (window.__isReady) {
+        if (!__jah__.__blockReady && __jah__.__isReady) {
             func()
         } else {
-            if (!window.__readyList) {
-                window.__readyList = [];
+            if (!__jah__.__readyList) {
+                __jah__.__readyList = [];
             }
-            window.__readyList.push(func);
+            __jah__.__readyList.push(func);
         }
 
         jah.bindReady();
-    },
+    }
 }
 
 module.exports = jah;
