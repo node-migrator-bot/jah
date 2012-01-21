@@ -115,8 +115,8 @@ var jah = {
 
         __jah__.__triggerReady = function () {
             __jah__.__blockReady = false
-            this.domReady()
-        }.bind(this)
+            jah.domReady()
+        }
 
         // Catch cases where $(document).ready() is called after the
         // browser event has already occurred.
