@@ -276,6 +276,25 @@ events.addListener = function (source, eventName, handler) {
     }
 };
 
+/**
+ * Register an event listener and autoremove it after event triggers
+ *
+ * @param {Object} source Object to listen to for an event
+ * @param {String|String[]} eventName Name or Array of names of the event(s) to listen for
+ * @param {Function} handler Callback to fire when the event triggers
+ *
+ * @returns {events.EventListener|events.EventListener[]} The event listener(s). Pass to removeListener to destroy it.
+ */
+events.addListenerOnce = function (source, eventName, handler) {
+    var l = events.addListener(source, eventName, function () {
+        handler.apply(this, arguments)
+        events.removeListener(l)
+        l = null
+    })
+
+    return l
+};
+
 events.addPropertyListener = function (source, property, eventName, handler) {
     var listeners = [], i;
     if (eventName instanceof Array) {
