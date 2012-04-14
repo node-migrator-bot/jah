@@ -30,8 +30,12 @@ function Preloader (items) {
     }.bind(this)
 
     this.load = function () {
+        if (this.queue.length == 0) {
+            events.trigger(this, 'complete', this);
+            return
+        }
         // Store number of callbacks we're expecting
-        this.count += this.queue.length 
+        this.count += this.queue.length
 
         var ref, i
         for (i=0; i<this.count; i++) {
@@ -48,7 +52,7 @@ function Preloader (items) {
                 continue
             }
             var file = resource(ref)
-              , callback = (function(ref) { return function () { didLoadResource(ref) } })(ref)
+              , callback = didLoadResource.bind(this, ref)
 
             if (file instanceof remotes.RemoteResource) {
                 // Notify when a resource has loaded
