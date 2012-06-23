@@ -161,7 +161,7 @@ var jah = {
 
     ready: function(func) {
         if (!__jah__.__blockReady && __jah__.__isReady) {
-            setTimeout(func, 1)
+            func()
         } else {
             if (!__jah__.__readyList) {
                 __jah__.__readyList = [];
