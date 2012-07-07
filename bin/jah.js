@@ -6,7 +6,7 @@ var sys = require('util'),
 
 
 var localPath = path.normalize(path.join(process.cwd(), 'node_modules', '.bin', 'jah')),
-    isLocal = path.existsSync(localPath) && require.resolve(localPath) != __filename;
+    isLocal = fs.existsSync(localPath) && require.resolve(localPath) != __filename;
 
 // If the local project has its own Jah install, use that executable instead
 if (isLocal) {
